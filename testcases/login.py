@@ -1,24 +1,20 @@
-import time
-
 import pytest
+from utilities.setup import initialize_driver
+from pageObject.login import LoginPage
 from utilities.readproperties import ReadConfig
-from utilities.utils import get_org_passcode_data
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+from utilities.utils import get_org_passcode_data
 
+LOGIN_URL = ReadConfig.geturl()  # Get the login URL from the config
+PASSCODE = ReadConfig.get_password()  # Get the passcode
 
-LOGIN_URL = ReadConfig.geturl()  # Get the login URL from the login section
-PASSCODE = ReadConfig.get_password()
-print(f"Login URL: {LOGIN_URL}, Username:  ")# Get the password for login
 
 @pytest.fixture(scope="function")
 def setup():
-    # Initialize WebDriver (using Chrome in this example)
-    driver = webdriver.Chrome()
-    driver.implicitly_wait(10)  # Implicit wait to handle loading time
+    driver = initialize_driver()
     driver.get(LOGIN_URL)
     yield driver
     driver.quit()
@@ -26,87 +22,69 @@ def setup():
 
 def test_login_page_elements(setup):
     driver = setup
+    login_page = LoginPage(driver)
 
-    # Wait for the login page to load (using explicit waits for better reliability)
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+    assert login_page.check_logo_displayed(), "Logo is not displayed"
+    assert login_page.check_welcome_text_displayed(), "Welcome text is not displayed"
+    assert login_page.check_passcode_field_displayed(), "Passcode field is not visible"
+    assert login_page.check_login_button_displayed(), "Login button is not visible"
 
-    # Check if the logo is present
-    try:
-        logo = driver.find_element(By.XPATH, "//img[@alt='Mq Title Logo']")  # Update with the actual XPath or selector for the logo
-        assert logo.is_displayed(), "Logo is not displayed"
-    except Exception as e:
-        assert False, f"Logo not found: {e}"
 
-    # Check if the welcome text is present
-    try:
-        welcome_text = driver.find_element(By.XPATH, "//h2[contains(text(), 'Welcome to')]")  # Update with actual XPath or selector for welcome text
-        assert welcome_text.is_displayed(), "Welcome text is not displayed"
-    except Exception as e:
-        assert False, f"Welcome text not found: {e}"
+def test_successful_login(setup):
+    driver = setup
+    login_page = LoginPage(driver)
 
-    # Check if the passcode fields are present
-    try:
-        passcode_field = driver.find_element(By.CLASS_NAME, "otp-inputGroup")  # Update with actual field ID or selector
-        assert passcode_field.is_displayed(), "Passcode field is not visible"
-    except Exception as e:
-        assert False, f"Passcode field not found: {e}"
+    # Enter the passcode and login
+    login_page.enter_passcode(PASSCODE)
+    login_page.click_login_button()
 
-    # Check if the login button is present
-    try:
-        login_button = driver.find_element(By.XPATH, "//app-submit[@buttonText='LOGIN']")
-  # Update with actual button ID or selector
-        assert login_button.is_displayed(), "Login button is not visible"
-    except Exception as e:
-        assert False, f"Login button not found: {e}"
+    WebDriverWait(driver, 10).until(
+        EC.url_contains("chat-board")
+    )
 
-    # Optionally, you can assert the title of the page to make sure it's the login page
-    assert "MQ PRO" in driver.title, "Login page did not load correctly"
 
-    # Sleep for a moment to observe (optional)
-    time.sleep(2)
+    assert "chat-board" in driver.current_url, "User is not redirected to the chartboard page"
+
 
 def test_passcode_fields_present(setup):
     driver = setup
+    login_page = LoginPage(driver)
 
-    # Locate all passcode fields (OTP inputs)
-    passcode_fields = driver.find_elements(By.CSS_SELECTOR, 'div.otp-inputGroup .otp-box ion-input')
+    # Check that exactly 6 passcode fields are present
+    assert len(
+        login_page.passcode_fields) == 6, f"The login page does not have 6 passcode fields, found {len(login_page.passcode_fields)}"
 
-    # Check if there are exactly 6 passcode fields
-    assert len(passcode_fields) == 6, f"The login page does not have 6 passcode fields, found {len(passcode_fields)}"
-
-def test_login_button_disabled(setup):
-    driver = setup
-
-    # Locate the login button
-    login_button = driver.find_element(By.XPATH, "//app-submit[@buttonText='LOGIN']")
-
-    # Assert that the login button is initially disabled by checking the 'disabled' class
-    assert login_button.get_attribute("disabled") is not True, "Login button is not disabled initially"
 
 def test_passcode_input_acceptance(setup):
     driver = setup
-    passcode_fields = driver.find_elements(By.XPATH, "//input[@maxlength='1']")
+    login_page = LoginPage(driver)
 
-    for i, field in enumerate(passcode_fields):
-        field.clear()
-        field.send_keys(PASSCODE[i])
+    # Enter the passcode into the OTP fields
+    login_page.enter_passcode(PASSCODE)
+
+    # Verify that the passcode fields are populated correctly
+    login_page.verify_passcode_fields(PASSCODE)
+
+
+def test_login_button_disabled(setup):
+    driver = setup
+    login_page = LoginPage(driver)
+
+    # Check that the login button is initially disabled
+    assert not login_page.is_login_button_disabled(), "Login button should be disabled initially"
+
 
 def test_unsuccessful_login_with_incorrect_passcode(setup):
-    # Scenario 2: Unsuccessful Login with Incorrect Passcode
     driver = setup
+    login_page = LoginPage(driver)
+
+    # Enter an incorrect passcode
     incorrect_code = "2123456"  # Replace with your test OTP code
-    passcode_fields = driver.find_elements(By.XPATH, "//input[@maxlength='1']")
+    login_page.enter_passcode(incorrect_code)
+    login_page.click_login_button()
 
-    for i, field in enumerate(passcode_fields):
-        field.clear()
-        field.send_keys(incorrect_code[i])
-    login_button = driver.find_element(By.XPATH, "//app-submit[@buttonText='LOGIN']")
-    login_button.click()
-
-    # Wait for error message to appear
-    error_message_container = WebDriverWait(driver, 10).until(
-        EC.visibility_of_element_located((By.CLASS_NAME, "error-message"))
-    )
+    # Wait for error message to appear using the helper method
+    error_message_container = login_page.wait_for_error_message()
 
     # Verify that the error message container is displayed
     assert error_message_container.is_displayed(), "Error message for incorrect passcode not displayed"
@@ -114,6 +92,7 @@ def test_unsuccessful_login_with_incorrect_passcode(setup):
 
 def test_invalid_org_id_alert_and_redirect(setup):
     driver = setup
+    login_page = LoginPage(driver)
 
     # Set an invalid org_id and try to access the page
     invalid_org_id = "998"  # Invalid org_id
@@ -122,71 +101,51 @@ def test_invalid_org_id_alert_and_redirect(setup):
     # Navigate to the page with the specific invalid org_id
     driver.get(url)
 
-    # Ensure we are on the correct page with the invalid org_id
-    assert f"org_id={invalid_org_id}" in driver.current_url, f"URL did not contain org_id={invalid_org_id}"
-
     # Wait for the alert popup to appear
-    time.sleep(2)  # You can replace this with WebDriverWait if needed
+    alert_popup = WebDriverWait(driver, 10).until(
+        EC.visibility_of_element_located((By.ID, "ion-overlay-1"))
+    )
+    assert alert_popup.is_displayed(), "Alert popup with ID 'ion-overlay-1' is not displayed"
 
-    # Check if the alert popup with id 'ion-overlay-1' is present
-    try:
-        alert_popup = driver.find_element(By.ID, "ion-overlay-1")
-        assert alert_popup.is_displayed(), "Alert popup with ID 'ion-overlay-1' is not displayed"
-        print("Alert popup appeared as expected.")
-    except Exception as e:
-        pytest.fail(f"Error: Alert popup not found. Exception: {str(e)}")
-
-    # Locate the close button in the alert popup. (This assumes the button has text 'Close')
-    # Adjust this selector based on how the close button is rendered in your application.
+    # Locate the close button in the alert popup
     close_button = driver.find_element(By.CLASS_NAME, "alert-button")
-
-    # Click the close button on the alert
     close_button.click()
 
     # Wait for the page to redirect to the base URL after the alert is closed
-    time.sleep(2)  # Optionally, use WebDriverWait to wait for the URL to change
+    WebDriverWait(driver, 10).until(
+        EC.url_to_be(LOGIN_URL)
+    )
 
     # Verify that the page has been redirected to the base URL (without org_id)
     assert driver.current_url == LOGIN_URL, f"Page was not redirected to the base URL. Current URL is: {driver.current_url}"
 
+
 @pytest.mark.parametrize("data", get_org_passcode_data())
-def test_passcode_input_with_org_id_and_passcode(setup, data,expected_error="Invalid passcode"):
-    """
-    This test case will run for each org_id and passcode pair from the `get_org_passcode_data` function.
-    """
-
-    driver =setup
-
+def test_passcode_input_with_org_id_and_passcode(setup, data, expected_error="Invalid passcode"):
+    driver = setup
     org_id = data["org_id"]
     valid_passcode = data["passcode"]
-    url = f"{LOGIN_URL}?org_id={org_id}"
 
-    # Navigate to the page with the specific org_id
-    driver.get(url)
+    # Navigate with the org_id
+    driver.get(f"{LOGIN_URL}?org_id={org_id}")
 
-    # Ensure we are on the correct page with the org_id in the URL
+    # Assert the org_id is present in the URL
     assert f"org_id={org_id}" in driver.current_url, f"URL did not contain org_id={org_id}"
 
-    # Wait for the passcode input field to be present
-    passcode_fields = driver.find_elements(By.CSS_SELECTOR, 'div.otp-inputGroup .otp-box ion-input')
+    # Enter the passcode into the OTP fields
+    login_page = LoginPage(driver)
+    login_page.enter_passcode(valid_passcode)
 
-    # Enter the passcode into the OTP fields and submit
-    for i, passcode_field in enumerate(passcode_fields):
-        # Get the actual <input> element inside the <ion-input>
-        input_element = passcode_field.find_element(By.CSS_SELECTOR, 'input')
+    # Verify the passcode fields are populated correctly
+    login_page.verify_passcode_fields(valid_passcode)
 
-        # Send the corresponding digit from the passcode to each input field
-        input_element.send_keys(valid_passcode[i])
-
-    login_button = driver.find_element(By.XPATH, "//app-submit[@buttonText='LOGIN']")
-    login_button.click()
+    # Click login
+    login_page.click_login_button()
 
     try:
-        # Check if the error message is displayed (invalid passcode scenario)
-        error_message_container = WebDriverWait(driver, 10).until(
-            EC.visibility_of_element_located((By.CLASS_NAME, "error-message"))
-        )
+        # Wait for the error message and validate
+        error_message_container = login_page.wait_for_error_message()
         assert error_message_container.text == expected_error, f"Expected error message: '{expected_error}', but got: '{error_message_container.text}'"
 
-    except Exception as e:
+    except Exception:
         assert "login success"

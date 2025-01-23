@@ -1,4 +1,5 @@
 {
   "login.py::test_successful_login_with_correct_passcode": true,
-  "login.py::test_page_elements_displayed_correctly": true
+  "login.py::test_page_elements_displayed_correctly": true,
+  "profile.py::test_profile_icon_present": true
 }

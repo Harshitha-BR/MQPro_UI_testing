@@ -13,8 +13,8 @@ class ReadConfig:
 
     @staticmethod
     def geturl():
-        username = config.get('login', 'login_url')
-        return username
+        url = config.get('login', 'login_url')
+        return url
 
     @staticmethod
     def get_password():
