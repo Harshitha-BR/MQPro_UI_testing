@@ -1,6 +1,17 @@
 [
+  "login.py::test_invalid_org_id_alert_and_redirect",
+  "login.py::test_login_button_disabled",
   "login.py::test_login_page_elements",
   "login.py::test_page_elements_displayed_correctly",
+  "login.py::test_passcode_fields_present",
+  "login.py::test_passcode_input",
+  "login.py::test_passcode_input_acceptance",
+  "login.py::test_passcode_input_for_org_id",
+  "login.py::test_passcode_input_with_org_id_and_passcode[data0]",
+  "login.py::test_passcode_input_with_org_id_and_passcode[data1]",
+  "login.py::test_passcode_input_with_org_id_and_passcode[data2]",
+  "login.py::test_passcode_input_with_org_id_and_passcode[data3]",
+  "login.py::test_passcode_input_with_org_id_and_passcode[data4]",
   "login.py::test_successful_login_with_correct_passcode",
   "login.py::test_unsuccessful_login_with_incorrect_passcode"
 ]

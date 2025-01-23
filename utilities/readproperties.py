@@ -17,7 +17,7 @@ class ReadConfig:
         return username
 
     @staticmethod
-    def getpassword():
+    def get_password():
         password = config.get('login', 'login_passcode')
         return password
 
