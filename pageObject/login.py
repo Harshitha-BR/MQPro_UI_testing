@@ -12,6 +12,7 @@ class LoginPage:
         self.passcode_field = driver.find_element(By.CLASS_NAME, "otp-inputGroup")
         self.login_button = driver.find_element(By.XPATH, "//app-submit[@buttonText='LOGIN']")
         self.error_message_locator = (By.CLASS_NAME, "error-message")
+        self.faq_card=driver.find_element(By.TAG_NAME,"ion-card")
 
     def enter_passcode(self, passcode):
         """Method to enter passcode into the OTP fields"""
@@ -57,3 +58,7 @@ class LoginPage:
             )
         except Exception as e:
             raise AssertionError("Error message not found: " + str(e))
+
+    def click_faq_card(self):
+        """Method to click on the FAQ card"""
+        self.faq_card.click()
