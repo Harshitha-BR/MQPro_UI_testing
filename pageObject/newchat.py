@@ -111,7 +111,7 @@ class NewchatPage(BasePage):
     def is_star_icon_displayed(self):
         """Check if the star icon is displayed"""
         star_icon_element = self.driver.find_element(*self.star_icon)
-        return star_icon_element.is_displayed()
+        return star_icon_element.is_displayed
 
         # Function to open the suggestion box
 

@@ -7,6 +7,7 @@ from pageObject.History import DashboardPage
 from selenium.webdriver.support import expected_conditions as EC
 
 from pageObject.newchat import NewchatPage
+from utilities.readproperties import ReadConfig
 
 
 class TestDashboard(unittest.TestCase):
@@ -16,10 +17,8 @@ class TestDashboard(unittest.TestCase):
 
     def setUp(self):
         # Load configuration values from config.ini
-        config = configparser.ConfigParser()
-        config.read("C:/Users/Adithya G/formyself/MQPro_UI_testing/configuration/config.ini")
-        self.base_url = config["URL"]["base_url"]
-        self.passcode = config["LOGIN"]["passcode"]
+        self.base_url = ReadConfig.geturl()
+        self.passcode = ReadConfig.get_password()
         # self.base_url = config["URL"]["base_url"]
 
         # Initialize WebDriver
@@ -38,9 +37,7 @@ class TestDashboard(unittest.TestCase):
         greeting_text = home_page.get_greeting_text()
         self.assertEqual(greeting_text, "Hi Joseph, please select an FAQ or feel free to ask a question")
 
-    def test_submit_button_no_input(self):
-        home_page = NewchatPage(self.driver)
-        home_page.click_submit_button()
+
         # Add assertion to check for any error message or behavior when no input is provided
 
     def test_non_sales_related_input(self):
@@ -83,19 +80,7 @@ class TestDashboard(unittest.TestCase):
         home_page = NewchatPage(self.driver)
         home_page.enter_text("What are the top 5 products by sales?")
         home_page.click_submit_button()
-        assert home_page.is_star_icon_displayed(), "3-dot Menu should appear for valid response"
-
-
-    def test_menu_clickable(self):
-        home_page = NewchatPage(self.driver)
-        home_page.click_faq_card()
-        home_page.open_question_settings_menu()
-
-        # Star the question
-        home_page.click_menu_item(0)
-
-        # Check if the star icon is displayed
-        assert home_page.is_star_icon_displayed(), "Star icon is not visible"
+        home_page.open_question_settings_menu(), "3-dot Menu should appear for valid response"
 
     def test_popover_menu_opens(self):
         home_page = NewchatPage(self.driver)

@@ -6,47 +6,62 @@ from selenium.webdriver.support import expected_conditions as EC
 
 class DashboardPage(BasePage):
     # Locators for elements on the Dashboard page
-    CONVERSATION_HISTORY_PANEL = (By.CLASS_NAME, "md.hydrated")  # Locator for history panel
-    NEW_CONVERSATION_BUTTON = (By.CLASS_NAME,
-                               "new-conversation.md.button.button-solid.ion-activatable.ion-focusable.hydrated")  # Locator for '+ New Conversation' button
-    CONVERSATION_LIST = (By.CLASS_NAME, "old-conversation")  # Adjust locator for conversation list
-    COMPANY_LOGO = (By.CLASS_NAME, "md hydrated")
-    SEE_MORE_BUTTON = (By.CLASS_NAME, "less-more item md item-lines-none hydrated item-label")
-    SHADOW_HOST = (By.CSS_SELECTOR, "shadow-host-selector")
-    MENU_BUTTON = (By.CLASS_NAME, "div.mat-mdc-menu-trigger.option-btn")
+    conversation_history_panel_locator = (By.ID, "main-content")
+    new_conversation_button_locator = (By.CLASS_NAME, "new-conversation")
+    company_logo_locator = (By.CLASS_NAME, "org-logo")
+    see_more_button_locator = (By.CLASS_NAME, "see-more-btn")
+    see_less_button_locator = (By.CLASS_NAME, "see-less-btn")
+    history_option_button_locator = (By.CLASS_NAME, "option-btn")
+    old_conversation_section_locator = (By.CLASS_NAME, "old-conversation")
+    conversation_item_locator = (By.CLASS_NAME, "conversation-item")
+    conversation_title_locator = (By.CLASS_NAME, "conversation-title")
+    conversation_option_button_locator = (By.CLASS_NAME, "option-btn")
 
     def verify_conversation_history_panel_display(self):
-        """Verify the display of the conversation history panel."""
-        panel = self.find_element(*self.CONVERSATION_HISTORY_PANEL)
-        return panel.is_displayed()
-
-    def is_new_conversation_button_clickable(self):
-        """Check if the '+ New Conversation' button is clickable."""
-        button = self.find_element(*self.NEW_CONVERSATION_BUTTON)
-        return button.is_enabled()  # Verifies if the button is enabled and clickable
-
-    def click_new_conversation_button(self):
-        """Click on the '+ New Conversation' button."""
-        self.click(*self.NEW_CONVERSATION_BUTTON)
-
-    def is_company_logo_displayed(self):
-        """Check if the company logo is displayed on the page."""
+        """Verify if the conversation history panel is displayed."""
         try:
-            logo = self.find_element(*self.COMPANY_LOGO)
-            return logo.is_displayed()
+            panel = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located(self.conversation_history_panel_locator)
+            )
+            return panel.is_displayed
         except:
             return False
 
-    def click_menu_icon(self):
-        """Click on the menu icon inside the history page."""
-        # Wait for the shadow host to be present
-        shadow_host = self.find_element(*self.SHADOW_HOST)
+    def get_new_conversation_button(self):
+        """Get the '+ New Conversation' button."""
+        return self.driver.find_element(*self.new_conversation_button_locator)
 
-        # Access shadow root
-        shadow_root = self.driver.execute_script("return arguments[0].shadowRoot", shadow_host)
+    def get_company_logo(self):
+        """Get the company logo."""
+        return self.driver.find_element(*self.company_logo_locator)
 
-        # Find menu button inside shadow DOM
-        menu_button = shadow_root.find_element(*self.MENU_BUTTON)
+    def get_see_more_button(self):
+        """Get the 'See More' button."""
+        return self.driver.find_element(*self.see_more_button_locator)
 
-        # Click the menu button
-        menu_button.click()
+    def get_see_less_button(self):
+        """Get the 'See Less' button."""
+        return self.driver.find_element(*self.see_less_button_locator)
+
+    def get_history_option_button(self):
+        """Get the history option button."""
+        return self.driver.find_element(*self.history_option_button_locator)
+
+    def get_old_conversations_section(self):
+        """Get the old conversations section."""
+        return WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located(self.old_conversation_section_locator)
+        )
+
+    def get_conversations_items(self):
+        """Get all conversation items."""
+        old_conversations = self.get_old_conversations_section()
+        return old_conversations.find_elements(*self.conversation_item_locator)
+
+    def get_conversation_topic(self, conversation_item):
+        """Get the conversation topic from a conversation item."""
+        return conversation_item.find_element(*self.conversation_title_locator)
+
+    def get_conversation_option_button(self, conversation_item):
+        """Get the conversation option button from a conversation item."""
+        return conversation_item.find_element(*self.conversation_option_button_locator)

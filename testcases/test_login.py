@@ -8,7 +8,7 @@ class TestLogin(unittest.TestCase):
     def setUp(self):
         # Load configuration values from config.ini
         config = configparser.ConfigParser()
-        config.read("C:/Users/Adithya G/formyself/MQPro_UI_testing/configuration/config.ini")
+        config.read("/home/harshitha/Documents/MQPro_UI_testing/configuration/config.ini")
         self.passcode = config["LOGIN"]["passcode"]
         self.base_url = config["URL"]["base_url"]
 
